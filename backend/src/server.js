@@ -32,6 +32,7 @@ async function findArtist(artistName, token){
     })
     .then(res => res.json())
     .then(function(json){
+      //console.log(json);
       const result = json['artists']['items'][0];
       artist = new Artist(result['id'],result['name'], result['genres'], result['popularity']);
     })
@@ -41,20 +42,75 @@ async function findArtist(artistName, token){
 }
 
 async function getRelatedArtist(artistID, token){
-  var retJSON;
+  var relatedArtistsArray = [];
   await fetch(`https://api.spotify.com/v1/artists/${artistID}/related-artists`, {
          method: 'get',
          headers: { 'Authorization': 'Bearer ' + token },
      })
      .then(res => res.json())
      .then(function(json){
-       console.log(json['artists']);
-       retJSON = json['artists'];
+       const artists = json['artists'];
+      //console.log(artists);
+     for(var index in artists){
+       const artistJSON = artists[index];
+       var artist = new Artist(artistJSON['id'],artistJSON['name'], artistJSON['genres'], artistJSON['popularity']);
+       relatedArtistsArray.push(artist);
+      // console.log(artist);
+     }
+      //relatedArtistsArray = artists;
      })
-     //.then(json => console.log(json['artists']['items'][0]['id']))
      .catch(err => console.error(err))
-     return retJSON;
+     return relatedArtistsArray;
 }
+
+
+// TODO:  change naming to related artist 1 vs artist 2
+
+/* Takes the array of 20 related artists and returns the top <numAritsts>
+determined by their amount of shared genres. */
+function sortTopRelatedArtists(artist, relatedArtists, numArtists){
+  console.log("sorting related artists closest to " + artist.name);
+
+  function intersect(a, b) {
+    var t;
+    if (b.length > a.length) t = b, b = a, a = t; // indexOf to loop over shorter
+    return a.filter(function (e) {
+        return b.indexOf(e) > -1;
+    });
+  }
+
+  /*let N be number of genres in artists
+  creates array of N empty arrays.
+  Array[index] holds the artists with <index> shared genres*/
+  const genres = artist.genres;
+  const numGenres = artist.genres.length;
+
+  var sortedArtists = [];
+
+  for(var i=0; i<numGenres; i++){
+    sortedArtists.push([]);
+  }
+  for(var index in relatedArtists){
+    const related = relatedArtists[index];
+    const commonGenres = intersect(genres, related.genres).length;
+    sortedArtists[commonGenres].push(related);
+  }
+
+  var returnArray = [];
+  for(var i=numGenres-1; i>=0; i--){
+
+    var subArray = sortedArtists[i];
+    for(var j=0; j<subArray.length; j++){
+      if(returnArray.length==numArtists){return(returnArray)};
+      returnArray.push(subArray[j]);
+      console.log(subArray[j]);
+    }
+  }
+
+
+
+}
+
 
 
 
@@ -62,17 +118,20 @@ app.get('/hello', (req, res) => res.send('Hello!'));
 
 
 app.post('/fetchArtistMap', async function(req, res){
+
+  const numArtists = req.body.numRelated;
+
   const artist1 = await findArtist(req.body.artist1, req.body.token);
-  const relatedArtist1 = await getRelatedArtist(artist1.id, req.body.token);
+  const relatedArtists1 = await getRelatedArtist(artist1.id, req.body.token);
 
   const artist2 = await findArtist(req.body.artist2, req.body.token);
-  const relatedArtist2 = await getRelatedArtist(artist2.id, req.body.token);
+  const relatedArtists2 = await getRelatedArtist(artist2.id, req.body.token);
 
-  console.log(JSON.stringify(artist2));
+  const sortedRelatedArtist1 = sortTopRelatedArtists(artist2, relatedArtists1, 5);
+  const sortedRelatedArtist2 = sortTopRelatedArtists(artist1, relatedArtists2, 5);
 
+  res.send({"artist1": artist1, "related1" : sortedRelatedArtist1, "artist2" : artist2, "related2": sortedRelatedArtist2});
 
-  res.send({"artist1ID" : artist1.id,
-    "artist2ID" : artist1.name});
 });
 
 
