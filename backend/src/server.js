@@ -19,7 +19,10 @@ class Artist{
 
 
 
-app.use(bodyParser.json())
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+
 
 
 async function findArtist(artistName, token){
@@ -103,7 +106,7 @@ function sortTopRelatedArtists(artist, relatedArtists, numArtists){
     for(var j=0; j<subArray.length; j++){
       if(returnArray.length==numArtists){return(returnArray)};
       returnArray.push(subArray[j]);
-      console.log(subArray[j]);
+      //console.log(subArray[j]);
     }
   }
 
@@ -114,7 +117,10 @@ function sortTopRelatedArtists(artist, relatedArtists, numArtists){
 
 
 
-app.get('/hello', (req, res) => res.send('Hello!'));
+app.get('/hello', function(req, res){
+    console.log("HELLO");
+    res.send("HELLO!")
+});
 
 
 app.post('/fetchArtistMap', async function(req, res){
@@ -129,13 +135,17 @@ app.post('/fetchArtistMap', async function(req, res){
 
   const sortedRelatedArtist1 = sortTopRelatedArtists(artist2, relatedArtists1, 5);
   const sortedRelatedArtist2 = sortTopRelatedArtists(artist1, relatedArtists2, 5);
-
-  res.send({"artist1": artist1, "related1" : sortedRelatedArtist1, "artist2" : artist2, "related2": sortedRelatedArtist2});
-
+  const retJSON = {"artist1": artist1, "related1" : sortedRelatedArtist1, "artist2" : artist2, "related2": sortedRelatedArtist2};
+  console.log(retJSON);
+  res.send(retJSON);
 });
 
 
-
+app.post('/add-comment', async function(req,res){
+  console.log("WASDASDA");
+  console.log(req.body);
+  res.send({"code": "200"});
+});
 
 
 
