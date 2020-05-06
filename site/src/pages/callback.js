@@ -20,7 +20,8 @@ function Callback(){
     localStorage.setItem('token', token);
     localStorage.setItem('artist1', artist1);
     localStorage.setItem('artist2', artist2);
-    window.location = '/map'
+    window.location = '/graph'
+    //window.location = '/map'
   }
 
 

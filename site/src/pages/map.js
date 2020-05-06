@@ -1,5 +1,9 @@
-import React from 'react';
+import * as React from 'react';
+
+
 const queryString = require('query-string');
+
+
 
 function Map(){
   const token = localStorage.getItem('token');
