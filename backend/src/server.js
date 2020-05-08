@@ -4,6 +4,7 @@ const queryString = require('query-string');
 var request = require('request'); // "Request" library
 var rp = require('request-promise');
 const fetch = require('node-fetch');
+import {MongoClient} from 'mongodb';
 
 const app = express();
 
@@ -16,11 +17,24 @@ class Artist{
   }
 }
 
-
-
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+
+async function retrieveRelatedArtists(artistID){
+  const client = await MongoClient.connect(`mongodb://localhost:27017`, {useNewUrlParser : true});
+  const db = client.db('artistStorage');
+  const artist = await db.collection("relatedArtists").findOne({"relatedTo": artistID});
+  client.close();
+  return artist;
+}
+
+async function saveRelatedArtists(artistID, artistArray){
+  const client = await MongoClient.connect(`mongodb://localhost:27017`, {useNewUrlParser : true});
+  const db = client.db('artistStorage');
+  const artist = await db.collection('relatedArtists').insertOne({relatedTo: artistID, relatedArray : artistArray});
+  client.close()
+}
 
 
 
@@ -45,25 +59,37 @@ async function findArtist(artistName, token){
 }
 
 async function getRelatedArtist(artistID, token){
-  var relatedArtistsArray = [];
-  await fetch(`https://api.spotify.com/v1/artists/${artistID}/related-artists`, {
-         method: 'get',
-         headers: { 'Authorization': 'Bearer ' + token },
-     })
-     .then(res => res.json())
-     .then(function(json){
-       const artists = json['artists'];
-      //console.log(artists);
-     for(var index in artists){
-       const artistJSON = artists[index];
-       var artist = new Artist(artistJSON['id'],artistJSON['name'], artistJSON['genres'], artistJSON['popularity']);
-       relatedArtistsArray.push(artist);
-      // console.log(artist);
-     }
-      //relatedArtistsArray = artists;
-     })
-     .catch(err => console.error(err))
-     return relatedArtistsArray;
+
+  const dbEntry = await retrieveRelatedArtists(artistID);
+
+  if(dbEntry==null){
+    // console.log("USING API");
+    var relatedArtistsArray = [];
+    await fetch(`https://api.spotify.com/v1/artists/${artistID}/related-artists`, {
+           method: 'get',
+           headers: { 'Authorization': 'Bearer ' + token },
+       })
+       .then(res => res.json())
+       .then(function(json){
+         const artists = json['artists'];
+        //console.log(artists);
+       for(var index in artists){
+         const artistJSON = artists[index];
+         var artist = new Artist(artistJSON['id'],artistJSON['name'], artistJSON['genres'], artistJSON['popularity']);
+         relatedArtistsArray.push(artist);
+        // console.log(artist);
+       }
+
+
+       })
+       .catch(err => console.error(err))
+       saveRelatedArtists(artistID, relatedArtistsArray);
+       return relatedArtistsArray;
+    }
+    else{
+      // console.log("DATABASE ENTRY");
+      return dbEntry.relatedArray;
+    }
 }
 
 
@@ -115,8 +141,6 @@ function sortTopRelatedArtists(artist, relatedArtists, numArtists){
 }
 
 
-
-
 app.get('/hello', function(req, res){
     console.log("HELLO");
     res.send("HELLO!")
@@ -124,7 +148,6 @@ app.get('/hello', function(req, res){
 
 
 app.post('/fetchArtistMap', async function(req, res){
-
   const numArtists = req.body.numRelated;
 
   const artist1 = await findArtist(req.body.artist1, req.body.token);
@@ -139,14 +162,6 @@ app.post('/fetchArtistMap', async function(req, res){
   console.log(retJSON);
   res.send(retJSON);
 });
-
-
-app.post('/add-comment', async function(req,res){
-  console.log("WASDASDA");
-  console.log(req.body);
-  res.send({"code": "200"});
-});
-
 
 
 app.listen(8000, ()=> console.log("listening on 8000"));
