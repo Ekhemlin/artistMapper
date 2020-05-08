@@ -47,6 +47,8 @@ type IGraph = {
   edges: IEdge[],
 };
 
+
+
 // NOTE: Edges must have 'source' & 'target' attributes
 // In a more realistic use case, the graph would probably originate
 // elsewhere in the App or be generated from some other state upstream of this component.
@@ -60,54 +62,11 @@ const sample: IGraph = {
       type: SPECIAL_EDGE_TYPE,
     },
     {
-      handleText: '5',
-      handleTooltipText: 'This edge connects Node A and Node B',
-      source: 'a1',
-      target: 'a2',
-      type: SPECIAL_EDGE_TYPE,
-    },
-    {
       handleText: '54',
       source: 'a2',
       target: 'a4',
       type: EMPTY_EDGE_TYPE,
-    },
-    {
-      handleText: '54',
-      source: 'a1',
-      target: 'a3',
-      type: EMPTY_EDGE_TYPE,
-    },
-    {
-      handleText: '54',
-      source: 'a3',
-      target: 'a4',
-      type: EMPTY_EDGE_TYPE,
-    },
-    {
-      handleText: '54',
-      source: 'a1',
-      target: 'a5',
-      type: EMPTY_EDGE_TYPE,
-    },
-    {
-      handleText: '54',
-      source: 'a4',
-      target: 'a1',
-      type: EMPTY_EDGE_TYPE,
-    },
-    {
-      handleText: '54',
-      source: 'a1',
-      target: 'a6',
-      type: EMPTY_EDGE_TYPE,
-    },
-    {
-      handleText: '24',
-      source: 'a1',
-      target: 'a7',
-      type: EMPTY_EDGE_TYPE,
-    },
+    }
   ],
   nodes: [
     {
@@ -131,47 +90,12 @@ const sample: IGraph = {
       y: 260.6060791015625,
     },
     {
-      id: 'a3',
-      title: 'Node C (3)',
-      type: EMPTY_TYPE,
-      x: 237.5757598876953,
-      y: 61.81818389892578,
-    },
-    {
       id: 'a4',
       title: 'Node D (4)',
       type: EMPTY_TYPE,
       x: 600.5757598876953,
       y: 600.81818389892578,
-    },
-    {
-      id: 'a5',
-      title: 'Node E (5)',
-      type: null,
-      x: 50.5757598876953,
-      y: 500.81818389892578,
-    },
-    {
-      id: 'a6',
-      title: 'Node E (6)',
-      type: SKINNY_TYPE,
-      x: 300,
-      y: 600,
-    },
-    {
-      id: 'a7',
-      title: 'Node F (7)',
-      type: POLY_TYPE,
-      x: 0,
-      y: 300,
-    },
-    {
-      id: 'a8',
-      title: 'Node G (8)',
-      type: COMPLEX_CIRCLE_TYPE,
-      x: -200,
-      y: 400,
-    },
+    }
   ],
 };
 
