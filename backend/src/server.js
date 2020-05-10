@@ -14,6 +14,7 @@ class Artist{
     this.name = name;
     this.genres = genres;
     this.popularity = popularity;
+    this.genresInCommon = 0;
   }
 }
 
@@ -36,6 +37,22 @@ async function saveRelatedArtists(artistID, artistArray){
   client.close()
 }
 
+
+async function getArtistFromID(artistID, token){
+ var artist;
+ await fetch(`https://api.spotify.com/v1/artists/${artistID}`,{
+        method: 'get',
+        headers: { 'Authorization': 'Bearer ' + token },
+    })
+    .then(res => res.json())
+    .then(function(json){
+      //console.log(json);
+      artist = new Artist(artistID,json['name'], json['genres'], json['popularity']);
+    })
+    //.then(json => console.log(json['artists']['items'][0]['id']))
+    .catch(err => console.error(err))
+    return artist;
+}
 
 
 
@@ -122,6 +139,7 @@ function sortTopRelatedArtists(artist, relatedArtists, numArtists){
   for(var index in relatedArtists){
     const related = relatedArtists[index];
     const commonGenres = intersect(genres, related.genres).length;
+    related.genresInCommon = commonGenres;
     try{
       sortedArtists[commonGenres].push(related);
     }
@@ -164,6 +182,25 @@ app.post('/fetchArtistMap', async function(req, res){
   const sortedRelatedArtist1 = sortTopRelatedArtists(artist2, relatedArtists1, 5);
   const sortedRelatedArtist2 = sortTopRelatedArtists(artist1, relatedArtists2, 5);
   const retJSON = {"artist1": artist1, "related1" : sortedRelatedArtist1, "artist2" : artist2, "related2": sortedRelatedArtist2};
+  console.log(retJSON);
+  res.send(retJSON);
+});
+
+app.post('/expandArtistMap', async function(req, res){
+  const numArtists = req.body.numRelated;
+
+  const artist1ID = req.body.artist1ID;
+  const artist1 = await getArtistFromID(artist1ID, req.body.token);
+  const relatedArtists1 = await getRelatedArtist(artist1ID, req.body.token);
+
+  const artist2ID = req.body.artist2ID;
+  const artist2 = await getArtistFromID(artist2ID, req.body.token);
+  const relatedArtists2 = await getRelatedArtist(artist2ID, req.body.token);
+
+  const sortedRelatedArtist1 = sortTopRelatedArtists(artist2, relatedArtists1, 5);
+  const sortedRelatedArtist2 = sortTopRelatedArtists(artist1, relatedArtists2, 5);
+
+  const retJSON = {"related1" : sortedRelatedArtist1, "related2": sortedRelatedArtist2};
   console.log(retJSON);
   res.send(retJSON);
 });

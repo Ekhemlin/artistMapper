@@ -47,13 +47,11 @@ type IGraph = {
   edges: IEdge[],
 };
 
-
-
 // NOTE: Edges must have 'source' & 'target' attributes
 // In a more realistic use case, the graph would probably originate
 // elsewhere in the App or be generated from some other state upstream of this component.
 
-const sample: IGraph = {
+var sample: IGraph = {
   edges: [
     // {
     //   handleText: '5',
@@ -113,13 +111,17 @@ const fetchData = async (artist1, artist2, token) => {
   return body;
 };
 
-
-//addNodes();
-
-
-
-
-
+const expandData = async (artist1, artist2, token) => {
+  const result = await fetch('/expandArtistMap', {
+    method: 'post',
+    body: JSON.stringify({"artist1ID": artist1, "artist2ID" : artist2, "token" : token, "numRelated" : 5}),
+    headers: {
+      'Content-Type' : 'application/json'
+    }
+  });
+  const body = await result.json();
+  return body;
+};
 
 
 
@@ -173,18 +175,19 @@ type IGraphState = {
   totalNodes: number,
   copiedNode: any,
   layoutEngineType?: LayoutEngineType,
+  side1SelectedNode : any,
+  side2SelectedNode : any,
+  side1Nodes : any,
+  side2Nodes : any,
+//EITAN
+
 };
 
 class Graph extends React.Component<IGraphProps, IGraphState> {
   GraphView;
 
-
-
-
   constructor(props: IGraphProps) {
     super(props);
-  //  alert("SAMPLE");
-
 
     this.state = {
       copiedNode: null,
@@ -192,6 +195,10 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
       layoutEngineType: undefined,
       selected: null,
       totalNodes: sample.nodes.length,
+      side1SelectedNode : {"name" : localStorage.getItem('artist1')},
+      side2SelectedNode : {"name" : localStorage.getItem('artist2')},
+      side1Nodes : [],
+      side2Nodes : [],
     };
 
     this.GraphView = React.createRef();
@@ -220,38 +227,46 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
           const startX1 = 1000;
           const startX2 = 0;
 
-
-          newSample.nodes.push({
+          var artist1Node = {
               id: result['artist1']['id'],
               subtype: SPECIAL_CHILD_SUBTYPE,
               title: result['artist1']['name'],
               type: EMPTY_TYPE,
               x: startX1,
               y: 0,
-          });
+              side: 1,
+          };
+          newSample.nodes.push(artist1Node);
+          this.state.side1SelectedNode = artist1Node;
 
-          newSample.nodes.push({
+          var artist2Node = {
               id: result['artist2']['id'],
               subtype: SPECIAL_CHILD_SUBTYPE,
               title: result['artist2']['name'],
               type: EMPTY_TYPE,
               x: startX2,
               y: 0,
-          });
+              side: 2,
+          };
+          newSample.nodes.push(artist2Node);
+          this.state.side2SelectedNode = artist2Node;
 
           const startY = -1 * (numRelated/2 * ySpace);
 
             for(var i=0; i<numRelated; i++){
-              newSample.nodes.push({
+              var newNode = {
                   id: result['related1'][i]['id'],
                   subtype: SPECIAL_CHILD_SUBTYPE,
                   title: result['related1'][i]['name'],
                   type: EMPTY_TYPE,
                   x: startX1 - xSpace,
                   y: startY + i*ySpace,
-              });
+                  side: 1,
+              };
+              newSample.nodes.push(newNode);
+              this.state.side1Nodes.push(newNode);
               newSample.edges.push({
-                  handleText: '',
+                  handleText: result['related1'][i]["genresInCommon"],
                   handleTooltipText: '',
                   source: result['artist1']['id'],
                   target: result['related1'][i]['id'],
@@ -260,25 +275,25 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
             }
 
             for(var i=0; i<numRelated; i++){
-              newSample.nodes.push({
+              var newNode = {
                   id: result['related2'][i]['id'],
                   subtype: SPECIAL_CHILD_SUBTYPE,
                   title: result['related2'][i]['name'],
                   type: EMPTY_TYPE,
                   x: startX2 + xSpace,
                   y: startY + i*ySpace,
-              });
+                  side: 2
+              };
+              newSample.nodes.push(newNode);
+              this.state.side2Nodes.push(newNode);
               newSample.edges.push({
-                  handleText: '',
+                  handleText: result['related2'][i]["genresInCommon"],
                   handleTooltipText: '',
                   source: result['artist2']['id'],
                   target: result['related2'][i]['id'],
                   type: SPECIAL_EDGE_TYPE,
                 });
             }
-
-
-
 
           const newState = {
               copiedNode: null,
@@ -321,6 +336,7 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
     return this.state.graph.nodes[i];
   }
 
+//EITAN READ THIS CODE IT MIGHT BE EASIER
   makeItLarge = () => {
     const graph = this.state.graph;
     const generatedSample = generateSample(this.state.totalNodes);
@@ -349,6 +365,143 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
       graph,
     });
   };
+
+  expandMap = () => {
+
+
+    //returns node index if it exists, -1 if not
+    function isNodeInArray(nodeID, nodeArray){
+      for(var i=0; i<nodeArray.length; i++){
+        if(nodeID == nodeArray[i].id){
+          console.log("node already in the map");
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    console.log(this.state.side1SelectedNode);
+    console.log(this.state.side2SelectedNode);
+    expandData(this.state.side1SelectedNode.id,this.state.side2SelectedNode.id, localStorage.getItem('token'))
+    .then(
+      (result) => {
+        const graph = this.state.graph;
+        graph.nodes = [
+            ...this.state.graph.nodes,
+        ];
+        //EXPAND MAP
+        const xSpace = 500;
+        const ySpace = 200;
+        const startY1 = this.state.side1SelectedNode.y;
+        const startX1 = this.state.side1SelectedNode.x;
+        const startY2 = this.state.side2SelectedNode.y;
+        const startX2 = this.state.side2SelectedNode.x;
+
+
+        const expandBy = [xSpace,-1*xSpace];
+        for(var i=0; i<graph.nodes.length; i++){
+          var node = graph.nodes[i];
+          if(node.side){
+            node.x+=expandBy[node.side-1];
+          }
+          graph[i] = node;
+        }
+
+        //ADD NODES TO CHOSEN
+        const numRelated = result["related1"].length;
+
+        //SIDE 1
+        for(var i=0; i<numRelated; i++){
+          const id = result["related1"][i]['id'];
+          if(isNodeInArray(id, this.state.side1Nodes)!=-1){
+            continue;
+          }
+
+          var newNode = {
+              id: id,
+              subtype: SPECIAL_CHILD_SUBTYPE,
+              title: result['related1'][i]['name'],
+              type: EMPTY_TYPE,
+              x: startX1,
+              y: startY1 + i*ySpace,
+              side: 1,
+          };
+          graph.nodes.push(newNode);
+          this.state.side1Nodes.push(newNode);
+
+          //DONT FORGET TO ADD NODES TO SIDES
+
+          const otherSide = isNodeInArray(id, this.state.side2Nodes);
+
+          if(otherSide!=-1){
+            graph.edges.push({
+                handleText: '',
+                handleTooltipText: '',
+                source: id,
+                target: this.state.side2Nodes[otherSide],
+                type: SPECIAL_EDGE_TYPE,
+              });
+          }
+
+          graph.edges.push({
+              handleText: result['related1'][i]["genresInCommon"],
+              handleTooltipText: '',
+              source: this.state.side1SelectedNode.id,
+              target: id,
+              type: SPECIAL_EDGE_TYPE,
+            });
+        }
+
+
+        //SIDE2
+        for(var i=0; i<numRelated; i++){
+          const id = result["related2"][i]['id'];
+          if(isNodeInArray(id, this.state.side2Nodes)!=-1){
+            continue;
+          }
+
+          var newNode = {
+              id: id,
+              subtype: SPECIAL_CHILD_SUBTYPE,
+              title: result['related2'][i]['name'],
+              type: EMPTY_TYPE,
+              x: startX2,
+              y: startY2 + i*ySpace,
+              side: 1,
+          };
+          graph.nodes.push(newNode);
+          this.state.side2Nodes.push(newNode);
+
+
+          const otherSide = isNodeInArray(id, this.state.side1Nodes);
+
+          if(otherSide!=-1){
+            graph.edges.push({
+            handleText: '',
+            handleTooltipText: '',
+            source: id,
+            target: this.state.side1Nodes[otherSide],
+            type: SPECIAL_EDGE_TYPE,
+            });
+          }
+
+          graph.edges.push({
+              handleText: result['related2'][i]["genresInCommon"],
+              handleTooltipText: '',
+              source: this.state.side2SelectedNode.id,
+              target: id,
+              type: SPECIAL_EDGE_TYPE,
+            });
+        }
+
+        var newState = this.state;
+        newState.layoutEngineType = "SnapToGrid";
+        newState.graph = graph;
+        this.setState(newState);
+      }
+    );
+  };
+
   deleteStartNode = () => {
     const graph = this.state.graph;
 
@@ -386,8 +539,21 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
 
   // Node 'mouseUp' handler
   onSelectNode = (viewNode: INode | null) => {
+    var newState = this.state;
+
+    console.log(viewNode);
+
+    if(this.state.side1Nodes.includes(viewNode)){
+      newState.side1SelectedNode = viewNode;
+      console.log("SIDE 1");
+    }
+    else if(this.state.side2Nodes.includes(viewNode)){
+      newState.side2SelectedNode = viewNode;
+      console.log("SIDE 2");
+    }
+    newState.selected = viewNode;
     // Deselect events will send Null viewNode
-    this.setState({ selected: viewNode });
+    this.setState(newState);
   };
 
   // Edge 'mouseUp' handler
@@ -432,6 +598,7 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
 
     this.setState({ graph, selected: null });
   };
+
 
   // Creates a new node between two edges
   onCreateEdge = (sourceViewNode: INode, targetViewNode: INode) => {
@@ -550,11 +717,13 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
     const { nodes, edges } = this.state.graph;
     const selected = this.state.selected;
     const { NodeTypes, NodeSubtypes, EdgeTypes } = GraphConfig;
-
     return (
       <div id="graph">
         <div className="graph-header">
           <button onClick={this.deleteStartNode}>Delete Node</button>
+          <button onClick={this.expandMap}>Expand Map</button>
+          <p>Side 1 selected artist : {this.state.side1SelectedNode.title}</p>
+          <p>Side 2 selected artist : {this.state.side2SelectedNode.title}</p>
           <div className="layout-engine">
             <span>Layout Engine:</span>
             <select

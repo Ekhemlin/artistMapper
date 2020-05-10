@@ -47,15 +47,8 @@ class NodeText extends React.Component<INodeTextProps> {
     const typeText = this.getTypeText(data, nodeTypes);
 
     return (
-      <text className={className} textAnchor="middle">
-        {!!typeText && <tspan opacity="0.5">{typeText}</tspan>}
-        {title && (
-          <tspan x={0} dy={lineOffset} fontSize="10px">
-            {title.length > maxTitleChars
-              ? title.substr(0, maxTitleChars)
-              : title}
-          </tspan>
-        )}
+      <text className={className} textAnchor="middle" alignmentBaseline="baseline">
+        {!!title && <tspan opacity="1">{title}</tspan>}
         {title && <title>{title}</title>}
       </text>
     );
