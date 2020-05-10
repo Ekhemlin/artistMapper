@@ -122,7 +122,12 @@ function sortTopRelatedArtists(artist, relatedArtists, numArtists){
   for(var index in relatedArtists){
     const related = relatedArtists[index];
     const commonGenres = intersect(genres, related.genres).length;
-    sortedArtists[commonGenres].push(related);
+    try{
+      sortedArtists[commonGenres].push(related);
+    }
+    catch(error){
+      sortedArtists[commonGenres] = [related];
+    }
   }
 
   var returnArray = [];

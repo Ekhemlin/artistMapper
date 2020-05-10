@@ -24,6 +24,7 @@ function Map(){
 
 fetchData(artist1,artist2,token);
 
+
 return(
   <div>
   <h1> Map </h1>

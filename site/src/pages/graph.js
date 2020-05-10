@@ -52,52 +52,75 @@ type IGraph = {
 // NOTE: Edges must have 'source' & 'target' attributes
 // In a more realistic use case, the graph would probably originate
 // elsewhere in the App or be generated from some other state upstream of this component.
+
 const sample: IGraph = {
   edges: [
-    {
-      handleText: '5',
-      handleTooltipText: '5',
-      source: 'start1',
-      target: 'a1',
-      type: SPECIAL_EDGE_TYPE,
-    },
-    {
-      handleText: '54',
-      source: 'a2',
-      target: 'a4',
-      type: EMPTY_EDGE_TYPE,
-    }
+    // {
+    //   handleText: '5',
+    //   handleTooltipText: '5',
+    //   source: 'start1',
+    //   target: 'a1',
+    //   type: SPECIAL_EDGE_TYPE,
+    // },
+    // {
+    //   handleText: '54',
+    //   source: 'a2',
+    //   target: 'a4',
+    //   type: EMPTY_EDGE_TYPE,
+    // }
   ],
   nodes: [
-    {
-      id: 'start1',
-      title: 'Start (0)',
-      type: SPECIAL_TYPE,
-    },
-    {
-      id: 'a1',
-      title: 'Node A (1)',
-      type: SPECIAL_TYPE,
-      x: 258.3976135253906,
-      y: 331.9783248901367,
-    },
-    {
-      id: 'a2',
-      subtype: SPECIAL_CHILD_SUBTYPE,
-      title: 'Node B (2)',
-      type: EMPTY_TYPE,
-      x: 593.9393920898438,
-      y: 260.6060791015625,
-    },
-    {
-      id: 'a4',
-      title: 'Node D (4)',
-      type: EMPTY_TYPE,
-      x: 600.5757598876953,
-      y: 600.81818389892578,
-    }
+    // {
+    //   id: 'start1',
+    //   title: 'Start (0)',
+    //   type: SPECIAL_TYPE,
+    // },
+    // {
+    //   id: 'a1',
+    //   title: 'Node A (1)',
+    //   type: SPECIAL_TYPE,
+    //   x: 258.3976135253906,
+    //   y: 331.9783248901367,
+    // },
+    // {
+    //   id: 'a2',
+    //   subtype: SPECIAL_CHILD_SUBTYPE,
+    //   title: 'Node B (2)',
+    //   type: EMPTY_TYPE,
+    //   x: 593.9393920898438,
+    //   y: 260.6060791015625,
+    // },
+    // {
+    //   id: 'a4',
+    //   title: 'Node D (4)',
+    //   type: EMPTY_TYPE,
+    //   x: 600.5757598876953,
+    //   y: 600.81818389892578,
+    // }
   ],
 };
+
+
+const fetchData = async (artist1, artist2, token) => {
+  const result = await fetch('/fetchArtistMap', {
+    method: 'post',
+    body: JSON.stringify({"artist1": artist1, "artist2" : artist2, "token" : token, "numRelated" : 5}),
+    headers: {
+      'Content-Type' : 'application/json'
+    }
+  });
+  const body = await result.json();
+  return body;
+};
+
+
+//addNodes();
+
+
+
+
+
+
 
 
 function generateSample(totalNodes) {
@@ -155,8 +178,13 @@ type IGraphState = {
 class Graph extends React.Component<IGraphProps, IGraphState> {
   GraphView;
 
+
+
+
   constructor(props: IGraphProps) {
     super(props);
+  //  alert("SAMPLE");
+
 
     this.state = {
       copiedNode: null,
@@ -168,6 +196,104 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
 
     this.GraphView = React.createRef();
   }
+
+
+   componentDidMount(){
+    const token = localStorage.getItem('token');
+    const artist1 = localStorage.getItem('artist1');
+    const artist2 = localStorage.getItem('artist2');
+
+    fetchData(artist1,artist2,token)
+    .then(
+      (result) => {
+          console.log(result['artist1']['name']);
+          const newSample: IGraph = {
+            edges: [
+            ],
+            nodes: [
+            ],
+          };
+          const numRelated = result['related1'].length;
+          console.log("RELATED " + numRelated);
+          const ySpace = 200;
+          const xSpace = 400;
+          const startX1 = 1000;
+          const startX2 = 0;
+
+
+          newSample.nodes.push({
+              id: result['artist1']['id'],
+              subtype: SPECIAL_CHILD_SUBTYPE,
+              title: result['artist1']['name'],
+              type: EMPTY_TYPE,
+              x: startX1,
+              y: 0,
+          });
+
+          newSample.nodes.push({
+              id: result['artist2']['id'],
+              subtype: SPECIAL_CHILD_SUBTYPE,
+              title: result['artist2']['name'],
+              type: EMPTY_TYPE,
+              x: startX2,
+              y: 0,
+          });
+
+          const startY = -1 * (numRelated/2 * ySpace);
+
+            for(var i=0; i<numRelated; i++){
+              newSample.nodes.push({
+                  id: result['related1'][i]['id'],
+                  subtype: SPECIAL_CHILD_SUBTYPE,
+                  title: result['related1'][i]['name'],
+                  type: EMPTY_TYPE,
+                  x: startX1 - xSpace,
+                  y: startY + i*ySpace,
+              });
+              newSample.edges.push({
+                  handleText: '',
+                  handleTooltipText: '',
+                  source: result['artist1']['id'],
+                  target: result['related1'][i]['id'],
+                  type: SPECIAL_EDGE_TYPE,
+                });
+            }
+
+            for(var i=0; i<numRelated; i++){
+              newSample.nodes.push({
+                  id: result['related2'][i]['id'],
+                  subtype: SPECIAL_CHILD_SUBTYPE,
+                  title: result['related2'][i]['name'],
+                  type: EMPTY_TYPE,
+                  x: startX2 + xSpace,
+                  y: startY + i*ySpace,
+              });
+              newSample.edges.push({
+                  handleText: '',
+                  handleTooltipText: '',
+                  source: result['artist2']['id'],
+                  target: result['related2'][i]['id'],
+                  type: SPECIAL_EDGE_TYPE,
+                });
+            }
+
+
+
+
+          const newState = {
+              copiedNode: null,
+              graph: newSample,
+              layoutEngineType: undefined,
+              selected: null,
+              totalNodes: sample.nodes.length,
+            };
+
+          this.setState(newState);
+
+
+        });
+
+}
 
   // Helper to find the index of a given node
   getNodeIndex(searchNode: INode | any) {
@@ -428,14 +554,7 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
     return (
       <div id="graph">
         <div className="graph-header">
-          <button onClick={this.addStartNode}>Add Node</button>
           <button onClick={this.deleteStartNode}>Delete Node</button>
-          <input
-            className="total-nodes"
-            type="number"
-            onBlur={this.handleChange}
-            placeholder={this.state.totalNodes.toString()}
-          />
           <div className="layout-engine">
             <span>Layout Engine:</span>
             <select
