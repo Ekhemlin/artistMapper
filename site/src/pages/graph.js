@@ -392,9 +392,9 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
         //EXPAND MAP
         const xSpace = 500;
         const ySpace = 200;
-        const startY1 = this.state.side1SelectedNode.y;
+        var startY1 = this.state.side1SelectedNode.y;
         const startX1 = this.state.side1SelectedNode.x;
-        const startY2 = this.state.side2SelectedNode.y;
+        var startY2 = this.state.side2SelectedNode.y;
         const startX2 = this.state.side2SelectedNode.x;
 
 
@@ -409,13 +409,20 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
 
         //ADD NODES TO CHOSEN
         const numRelated = result["related1"].length;
+        console.log("NUM RELATED " + numRelated);
+        const maxNodes = 5;
+        var nodesAdded=0;
 
         //SIDE 1
-        for(var i=0; i<numRelated; i++){
+        var i=0;
+        while(i<numRelated&&nodesAdded<maxNodes){
           const id = result["related1"][i]['id'];
           if(isNodeInArray(id, this.state.side1Nodes)!=-1){
+            startY1 -= ySpace;
+            i++;
             continue;
           }
+          nodesAdded+=1;
 
           var newNode = {
               id: id,
@@ -450,15 +457,65 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
               target: id,
               type: SPECIAL_EDGE_TYPE,
             });
+            i++;
         }
+
+        // for(var i=0; (i<numRelated&&nodesAdded<maxNodes); i++){
+        //   const id = result["related1"][i]['id'];
+        //   if(isNodeInArray(id, this.state.side1Nodes)!=-1){
+        //     startY1 -= ySpace;
+        //     continue;
+        //   }
+        //   nodesAdded+=1;
+        //
+        //   var newNode = {
+        //       id: id,
+        //       subtype: SPECIAL_CHILD_SUBTYPE,
+        //       title: result['related1'][i]['name'],
+        //       type: EMPTY_TYPE,
+        //       x: startX1,
+        //       y: startY1 + i*ySpace,
+        //       side: 1,
+        //   };
+        //   graph.nodes.push(newNode);
+        //   this.state.side1Nodes.push(newNode);
+        //
+        //   //DONT FORGET TO ADD NODES TO SIDES
+        //
+        //   const otherSide = isNodeInArray(id, this.state.side2Nodes);
+        //
+        //   if(otherSide!=-1){
+        //     graph.edges.push({
+        //         handleText: '',
+        //         handleTooltipText: '',
+        //         source: id,
+        //         target: this.state.side2Nodes[otherSide],
+        //         type: SPECIAL_EDGE_TYPE,
+        //       });
+        //   }
+        //
+        //   graph.edges.push({
+        //       handleText: result['related1'][i]["genresInCommon"],
+        //       handleTooltipText: '',
+        //       source: this.state.side1SelectedNode.id,
+        //       target: id,
+        //       type: SPECIAL_EDGE_TYPE,
+        //     });
+        // }
 
 
         //SIDE2
-        for(var i=0; i<numRelated; i++){
+        nodesAdded =0;
+
+
+
+        for(var i=0; (i<numRelated&&nodesAdded<maxNodes); i++){
           const id = result["related2"][i]['id'];
           if(isNodeInArray(id, this.state.side2Nodes)!=-1){
+            startY2 -=ySpace;
             continue;
           }
+          nodesAdded+=1;
 
           var newNode = {
               id: id,
@@ -495,7 +552,12 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
         }
 
         var newState = this.state;
-        newState.layoutEngineType = "SnapToGrid";
+        if(this.state.layoutEngineType!="SnapToGrid"){
+          newState.layoutEngineType = "SnapToGrid";
+        }
+        else{
+          newState.layoutEngineType = "None";
+        }
         newState.graph = graph;
         this.setState(newState);
       }

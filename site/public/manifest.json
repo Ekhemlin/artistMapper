@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Artist Mapper",
+  "name": "An interactive map of musicians",
   "icons": [
     {
       "src": "favicon.ico",

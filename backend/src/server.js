@@ -117,6 +117,9 @@ determined by their amount of shared genres. */
 function sortTopRelatedArtists(artist, relatedArtists, numArtists){
   console.log("sorting related artists closest to " + artist.name);
 
+
+
+
   function intersect(a, b) {
     var t;
     if (b.length > a.length) t = b, b = a, a = t; // indexOf to loop over shorter
@@ -179,8 +182,8 @@ app.post('/fetchArtistMap', async function(req, res){
   const artist2 = await findArtist(req.body.artist2, req.body.token);
   const relatedArtists2 = await getRelatedArtist(artist2.id, req.body.token);
 
-  const sortedRelatedArtist1 = sortTopRelatedArtists(artist2, relatedArtists1, 5);
-  const sortedRelatedArtist2 = sortTopRelatedArtists(artist1, relatedArtists2, 5);
+  const sortedRelatedArtist1 = sortTopRelatedArtists(artist2, relatedArtists1, numArtists);
+  const sortedRelatedArtist2 = sortTopRelatedArtists(artist1, relatedArtists2, numArtists);
   const retJSON = {"artist1": artist1, "related1" : sortedRelatedArtist1, "artist2" : artist2, "related2": sortedRelatedArtist2};
   console.log(retJSON);
   res.send(retJSON);
@@ -197,8 +200,8 @@ app.post('/expandArtistMap', async function(req, res){
   const artist2 = await getArtistFromID(artist2ID, req.body.token);
   const relatedArtists2 = await getRelatedArtist(artist2ID, req.body.token);
 
-  const sortedRelatedArtist1 = sortTopRelatedArtists(artist2, relatedArtists1, 5);
-  const sortedRelatedArtist2 = sortTopRelatedArtists(artist1, relatedArtists2, 5);
+  const sortedRelatedArtist1 = sortTopRelatedArtists(artist2, relatedArtists1, numArtists*2);
+  const sortedRelatedArtist2 = sortTopRelatedArtists(artist1, relatedArtists2, numArtists*2);
 
   const retJSON = {"related1" : sortedRelatedArtist1, "related2": sortedRelatedArtist2};
   console.log(retJSON);
