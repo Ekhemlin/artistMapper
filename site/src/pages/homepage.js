@@ -5,7 +5,7 @@ function HomePage(){
 
   async function login(){
     var client_id = '2be7fd88da5d44ff818556c6d53a62a0'; // Your client id
-    var redirect_uri = 'http://localhost:8000/callback'; // Your redirect uri
+    var redirect_uri = 'http://ec2-100-26-121-105.compute-1.amazonaws.com/callback'; // Your redirect uri
 
     const authAPI = `https://accounts.spotify.com/authorize?` + querystring.stringify({
           client_id: client_id,
