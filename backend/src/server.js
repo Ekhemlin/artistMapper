@@ -5,8 +5,10 @@ var request = require('request'); // "Request" library
 var rp = require('request-promise');
 const fetch = require('node-fetch');
 import {MongoClient} from 'mongodb';
+import path from 'path';
 
 const app = express();
+app.use(express.static(path.join(__dirname, '/build')));
 
 class Artist{
   constructor(id, name, genres, popularity){
@@ -208,5 +210,8 @@ app.post('/expandArtistMap', async function(req, res){
   res.send(retJSON);
 });
 
+app.get('*', (req, res)=> {
+  res.sendFile(path.join(__dirname+'build/index.html'));
+});
 
 app.listen(8000, ()=> console.log("listening on 8000"));
