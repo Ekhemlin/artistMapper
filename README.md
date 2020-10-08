@@ -9,3 +9,12 @@ After the initial artist search, the web app displays each musician's top 5 rela
 The user is then able to continuously expand the dynamic map by exploring the connections of any of the related artists. 
 
 ![Alt Text](https://thumbs.gfycat.com/GlassCluelessBorer-size_restricted.gif)_ 
+
+Artists are cached in a MongoDB database for faster response. The project is currently hosted on an AWS's EC2 server. 
+
+## Future plans for improvement:
+
+ - Transfer the backend entirely to AWS Lambda and API Gateway.  
+ - Determine artist similarity based on more data from Spotify's API, such as audio analysis of their top tracks. 
+ - Find an efficient way to cache musician connections in the database, in addition to their basic artist data.  
+
